@@ -713,6 +713,17 @@ def upd_climate(id,s):
    log('climate: ' + s['entity_id'] + ' '+fn+'('+dc+')',0)
    DevicesDB.update(id,{'entity_ha': True,'entity_type': 'climate', 'friendly_name': fn,'category': 'hvac_ac'})
 
+def upd_cover(id,s):
+    dc = s['attributes'].get('device_class','')
+    fn = s['attributes'].get('friendly_name','')
+    log('cover: ' + s['entity_id'] + ' ' + fn + '(' + dc + ')',0)
+    DevicesDB.update(id,{
+        'entity_ha': True,
+        'entity_type': 'cover',
+        'friendly_name': fn,
+        'category': 'openable.curtain'
+    })
+
 
 def upd_hvac_radiator(id,s):
    dc=s['attributes'].get('device_class','')
@@ -735,6 +746,7 @@ for s in ha_dev:
       'button': upd_button,
       'input_boolean': upd_input_boolean,
       'climate': upd_climate,
+      'cover': upd_cover,
       'hvac_radiator': upd_hvac_radiator
    }
    dict.get(a, upd_default)(s['entity_id'],s)
