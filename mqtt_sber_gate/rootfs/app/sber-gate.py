@@ -71,7 +71,24 @@ def ha_OnOff(id):
    hds = {'Authorization': 'Bearer '+Options['ha-api_token'], 'content-type': 'application/json'}
    response=requests.post(url, json={"entity_id": id}, headers=hds)
 #   print(response)
+def ha_cover(id, changes):
+    hds = {'Authorization': 'Bearer '+Options['ha-api_token'], 'content-type': 'application/json'}
+    entity_domain, entity_name = id.split('.',1)
+    log('Отправляем команду в HA для '+id+' Cover: ' + str(changes))
 
+    # Если пришла команда on_off → open/close
+    if changes.get('on_off', False):
+        if DevicesDB.get_state(id,'on_off'):
+            url = Options['ha-api_url']+'/api/services/'+entity_domain+'/open_cover'
+        else:
+            url = Options['ha-api_url']+'/api/services/'+entity_domain+'/close_cover'
+        requests.post(url, json={"entity_id": id}, headers=hds)
+
+    # Если пришла команда hvac_temp_set → аналог для штор это position
+    if changes.get('range', False):
+        pos = DevicesDB.get_state(id,'range')  # 0–100
+        url = Options['ha-api_url']+'/api/services/'+entity_domain+'/set_cover_position'
+        requests.post(url, json={"entity_id": id, "position": pos}, headers=hds)
 def ha_climate(id,changes):
    hds = {'Authorization': 'Bearer '+Options['ha-api_token'], 'content-type': 'application/json'}
    entity_domain,entity_name=id.split('.',1)
@@ -465,6 +482,8 @@ def on_message_cmd(mqttc, obj, msg):
 
       if DevicesDB.DB[id].get('entity_type',None) == 'climate':
          ha_climate(id,changes)
+      elif DevicesDB.DB[id].get('entity_type',None) == 'cover':
+         ha_cover(id,changes)  
       else:
          if DevicesDB.DB[id].get('entity_ha',False):
             ha_OnOff(id)
